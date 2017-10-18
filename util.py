@@ -87,7 +87,7 @@ def log_header(addr):
     return str(now() + ": Conn '" + str(addr) + "' :")
 
 def log_header_for_web_server(addr, requester):
-    return str(now() + ": Conn '" + str(addr) + "' on behalf of '" + str(requester) + "' :")
+    return str(now() + ": Conn '" + str(addr) + "' for '" + str(requester) + "' :")
 
 # Get HTTP response for corresponding error
 def get_failure_response(error):
