@@ -37,7 +37,9 @@ Expectations that the proxy has for the incoming request:
 - The proxy only supports http requests, not https.
 
 #### 5. Forwarding server response to client
-The response is forwarded to the client mostly unchanged. The only possible change will be to the connection header. If the connection header is missing or indicates a persistent connection, the response will be altered to include a header indicating non-persistent connection. The new connection header is: `Connection: close\r\n`.
+The response is forwarded to the client mostly unchanged.
+- A connection header will be added (possibly replacing an existing when) to specify a non-persistent connection. The new connection header is: `Connection: close\r\n`.
+- The request line will be changed from an absolute URI to a relative one. For example: `GET www.website.com/index.html HTTP/1.1` => `GET /index.html HTTP/1.1`
 
 #### 6. Multithreading
 The proxy server waits for incoming connections. It starts a new worker thread to handle the new connection. This thread will run for as long as the tcp connection lives. The thread takes care of parsing the client's request, creating an additional tcp connection to the server, and forwarding the response back to the client. The connection with the client is closed when the response from the web server is sent successfully OR when an error occurs.
@@ -59,7 +61,7 @@ Logging statements that are specific to a tcp connection with the origin web ser
 
 RFC 2616 lists requirements for proxy servers such as:
 
-    _If the response is being forwarded through a proxy, the proxy application MUST NOT modify the Server response-header. Instead, it SHOULD include a Via field (as described in section 14.45)._
+`If the response is being forwarded through a proxy, the proxy application MUST NOT modify the Server response-header. Instead, it SHOULD include a Via field (as described in section 14.45).`
 
 I did not modify the server header from the origin server, as required. However, I did not include a Via path either.
 
