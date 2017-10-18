@@ -84,10 +84,10 @@ def get_open_ports():
 
 # Formatted log header
 def log_header(addr):
-    return str(now() + ": Connection to '" + str(addr) + "' :")
+    return str(now() + ": Conn '" + str(addr) + "' :")
 
 def log_header_for_web_server(addr, requester):
-    return str(now() + ": Connection to '" + str(addr) + "' on behalf of '" + str(requester) + "' :")
+    return str(now() + ": Conn '" + str(addr) + "' on behalf of '" + str(requester) + "' :")
 
 # Get HTTP response for corresponding error
 def get_failure_response(error):
@@ -111,7 +111,7 @@ def grab_request_line(conn):
     while True:
         bytes = conn.recv(BUF_SIZE)
         if not bytes: break
-        decoded_bytes = bytes.decode("ascii")
+        decoded_bytes = bytes.decode()
         accumulated_request += decoded_bytes
         accumulated_request.lstrip() # RFC 2616 says leading whitespace before status line can be ignored
         if line_matcher.findall(accumulated_request):
@@ -157,6 +157,6 @@ def adjust_headers_for_request(request, path, server_name):
     new_request_line += CONNECTION_CLOSE_HEADER
     new_request_line += HOST_HEADER + server_name + CRLF
 
-    rest = re.sub(CONNECTION_HEADER_RE, "", rest) # TODO: We need to make sure this deletes the header
+    rest = re.sub(CONNECTION_HEADER_RE, "", rest)
     rest = re.sub(HOST_HEADER_RE, "", rest)
     return (new_request_line + rest)

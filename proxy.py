@@ -35,14 +35,13 @@ def worker(client_conn, addr):
             res = util.get_failure_response(p)
             print(util.log_header(addr), "Something was wrong with the request from client. Closing connection.")
             client_conn.sendall(str.encode(res))
-            client_conn.close()
             return
 
         while True:
             if re.findall(util.MESSAGE_END, acc_request): break # If end of message received, break
             bytes = client_conn.recv(util.BUF_SIZE)
             if not bytes: break
-            acc_request += bytes.decode("ascii")
+            acc_request += bytes.decode()
         print(util.log_header(addr), "Proxy has received the following request:\n", acc_request)
         request = util.adjust_headers_for_request(acc_request, file_path, origin_server)
 
@@ -51,36 +50,34 @@ def worker(client_conn, addr):
 
         server_conn.connect((origin_server, util.HTTP_PORT))
         server_conn.sendall(str.encode(request))
-        print(util.log_header_for_web_server(server_addr, addr), 'Connected to origin web server.')
+        print(util.log_header_for_web_server(server_addr, addr),
+              'Connected to origin web server. Request sent to server:\n', request)
 
         try:
-            server_response = ""
+            server_response = b''
             while True:
-                print(util.log_header_for_web_server(server_addr, addr) + "in while loop listening to server")
-                bytes = server_conn.recv(util.BUF_SIZE) # TODO: failing in this loop. gets stuck
+                bytes = server_conn.recv(util.BUF_SIZE)
                 if not bytes: break
-                server_response += bytes.decode("ascii")
+                server_response += bytes
             print(util.log_header_for_web_server(server_addr, addr),
-                  'Closing connection. Response received: \n' + server_response)
-            server_conn.close()
-        except Exception as e:
+                  'Received response from server and forwarded to client. Closing connection.')
+        except Exception:
             print(util.log_header_for_web_server(server_addr, addr),'Something went wrong. Closing connection.')
-            server_conn.close()
-            client_conn.close()
             return
+        finally:
+            server_conn.close()
 
         # Send the server's response back to the client and close the connection
-        client_conn.sendall(str.encode(server_response))
-        client_conn.close()
+        client_conn.sendall(server_response)
         print(util.log_header(addr), "Connection closed with client.")
-        return
     except:
         print(util.log_header(addr), "Something went wrong, Connection closed.")
+    finally:
         client_conn.close()
         exit()
 
 ###############################################################
-# Start the proxy server. Exit gracefully/simply on exception.
+# Start the proxy server
 try:
     main()
 except:
